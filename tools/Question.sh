@@ -59,27 +59,31 @@ function _ask {
     local gum_args=("choose"
       "--header" "$header"
       "--padding" "1 2"
+      "--unselected-prefix" "[ ] "
+      "--selected-prefix" "[✔] "
+      "--cursor-prefix" "[ ] "
       "--label-delimiter" "$_LABEL_DELIMITER"
       "--output-delimiter" "$_OPTION_DELIMITER"
       "--input-delimiter" "$_OPTION_DELIMITER")
 
     [[ "$multiple" == "true" ]] && gum_args+=("--no-limit")
 
-    local options=$(jq -r --arg ld "$_LABEL_DELIMITER" --arg id "$_OPTION_DELIMITER" --arg custom "$_CUSTOM_OPTION" \
-      '[.options[] | .label + ": " + .description + $ld + .label] | . + [$custom + $ld + $custom] | join($id)' <<<"$question")
+    local options=$(jq -r --arg ld "$_LABEL_DELIMITER" --arg od "$_OPTION_DELIMITER" --arg custom "$_CUSTOM_OPTION" \
+      '[.options[] | .label + ": " + .description + $ld + .label] | . + [$custom + $ld + $custom] | join($od)' <<<"$question")
 
     local selected=$(echo "$options" | gum "${gum_args[@]}") || continue
 
     local answer="[]"
 
     if [[ "$multiple" == "true" ]]; then
-      while IFS="$_OPTION_DELIMITER" read -r s; do
-        [[ -z "$s" ]] && continue
-        if [[ "$s" == "$_CUSTOM_OPTION" ]]; then
-          s=$(gum input --header "$header" --padding "1 2" </dev/tty) || continue
+      while IFS= read -r lab; do
+        lab=$(jq -r "." <<<"$lab")
+        [[ -z "$lab" ]] && continue
+        if [[ "$lab" == "$_CUSTOM_OPTION" ]]; then
+          lab=$(gum input --header "$header" --padding "1 2" </dev/tty) || continue
         fi
-        answer=$(jq --arg a "$s" '. + [$a]' <<<"$answer")
-      done <<<"$selected"
+        answer=$(jq --arg a "$lab" '. + [$a]' <<<"$answer")
+      done < <(jq -R --arg od "$_OPTION_DELIMITER" 'split($od) | .[]' <<<"$selected")
     else
       if [[ "$selected" == "$_CUSTOM_OPTION" ]]; then
         local custom_ans

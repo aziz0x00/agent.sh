@@ -96,7 +96,10 @@ function tool_call {
             ALLOWED_TOOLS[$fmt]=1
             echo "Tool allowed: " "$fmt" >>$LOGS_FILE
             ;;
-        *) status_code=1 ;;
+        *)
+            result="<user_interrupted>"
+            status_code=1
+            ;;
         esac
     }
 
