@@ -32,7 +32,7 @@ function PreEdit {
 
   local path=$(jq -r .path <<<"$parameters")
 
-  [[ -w "$path" ]] || [[ -w "$(dirname "$path")" ]] || {
+  [[ -w "$path" ]] || {
     echo "Error: File '$path' does not exist or not readable."
     return 1
   }
