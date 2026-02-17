@@ -25,7 +25,6 @@ declare -A \
     KEY_HEADER=([anthropic]='x-api-key:' [openai_compat]='Authorization: Bearer')
 
 echo -ne '{
-  "model": "'$model'",
   "temperature": 1.0, "top_p": 0.95,
   "messages": [], "tools": [],
   "stream": true

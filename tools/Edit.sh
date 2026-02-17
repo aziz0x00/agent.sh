@@ -31,7 +31,8 @@ function PreEdit {
   local parameters=$(jq '.replaceAll = (.replaceAll // false)' <<<"$1") # set defaults
 
   local path=$(jq -r .path <<<"$parameters")
-  touch "$path" && [[ -w "$path" ]] || {
+
+  [[ -w "$path" ]] || [[ -w "$(dirname "$path")" ]] || {
     echo "Error: File '$path' does not exist or not readable."
     return 1
   }
@@ -72,6 +73,6 @@ function Edit {
   local tmp=$2
 
   cat "$tmp" >"$path"
-  [[ $? -eq 0 ]] && echo "Successfully edited '$path'." || echo "Unexpected error."
+  [[ $? -eq 0 ]] && echo "Edit succeded." || echo "Unexpected error."
   rm "$tmp" &>/dev/null
 }

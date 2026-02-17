@@ -44,6 +44,7 @@ Put your providers API keys (if any) in `.env`, see `.env.example`
 | **Bash**      | Run shell commands                   |
 | **WebSearch** | Search the web via Exa AI            |
 | **Skill**     | Use specialized skills               |
+| **Question**  | Ask user for input/choices           |
 
 
 
@@ -110,3 +111,7 @@ For now you can put your system prompt in `system_prompt.md` (the current one ne
 - shorter and smaller code base
 - improve code simplicity and readability
 - add other providers later if needed
+
+## Credits
+
+Thanks to [opencode](https://github.com/anomalyco/opencode) - borrowed a lot of cool ideas from it!

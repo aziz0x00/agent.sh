@@ -10,7 +10,7 @@ touch "$LOGS_FILE" &&
     [[ ! -z "$TMUX_PANE" ]] &&
     tmux splitw -dv -l 5 'echo -e "\e[38;5;244mLOGS('$LOGS_FILE')"; tail -f '$LOGS_FILE''
 
-source "$_DIR"/.env
+set -a; source "$_DIR"/.env; set +a # poppulate env
 source "$_DIR"/providers/opencode-zen.sh
 
 function jq_inplace { jq "$@" <$STATE_FILE >${STATE_FILE}.tmp && mv ${STATE_FILE}.tmp $STATE_FILE; }
@@ -20,8 +20,8 @@ switch_model ${MODELS[0]}
 add_system_prompt "$(cat "$_DIR"/system_prompt.md)"
 add_system_prompt "Current date: $(date "+%a %b %d %Y")"
 
-declare -A TOOLS ALLOWED_TOOLS SAFE_TOOLS=([Skill]=1 [WebSearch]=1) # TODO: do better tool perms mgmt
-for tool in Read Glob Grep WebSearch Skill Edit Write Bash; do
+declare -A TOOLS ALLOWED_TOOLS SAFE_TOOLS=([Skill]=1 [WebSearch]=1 [Question]=1) # TODO: do better tool perms mgmt
+for tool in Question Read Glob Grep WebSearch Skill Edit Write Bash; do
     source "$_DIR"/tools/${tool}.sh
     TOOLS[$tool]=$TOOL_DEF
 done && activate_tools TOOLS
@@ -31,13 +31,11 @@ function prompt_user {
     while true; do
         local width=$(($(tput cols) - 2)) && ((width > 80)) && width=80
         user_prompt=""
-        user_prompt=$(gum write --width $width --cursor.foreground="#e5c07b" --header="$model" \
-            --prompt.foreground="#e5c07b" --height=3 </dev/tty)
+        user_prompt=$(gum write --width $width --header="$model" --height=3 </dev/tty)
         [ $? -ne 0 ] && exit # ^D
         [ -z "$user_prompt" ] && continue
         [[ $width -gt ${#user_prompt} ]] && width=0
-        gum style --width $width --margin '0 0' --border=normal \
-            --padding="0 1" --border-foreground '#4c566a' "$user_prompt"
+        gum style --width $width --margin '0 0' --border=normal --padding="0 1" "$user_prompt"
 
         case "$user_prompt" in
         /state    | /s) ${EDITOR:-vim} $STATE_FILE ;;
@@ -45,7 +43,7 @@ function prompt_user {
         /logs     | /l) less $LOGS_FILE ;;
         # /agent    | /a) switch_agent ;;
         /model    | /m) switch_model $(echo "${MODELS[@]}" |
-            gum choose --input-delimiter=" " --cursor.foreground="#e5c07b") ;;
+            gum choose --input-delimiter=" ") ;;
         *) return ;;
         esac
     done
@@ -88,7 +86,7 @@ function tool_call {
         local prompt=$(gum style "$fun $par" \
             --foreground '#e5c07b')$'\n\n Approve invocation?'
         answer=$(echo -e "Yes\nYes, always allow this signature\nNo, adjust approach" |
-            gum choose --header="$prompt" --cursor.foreground="#e5c07b")
+            gum choose --header="$prompt")
 
         [[ -n "$sound_pid" ]] && [[ "$sound_pid" == "$(jobs -rp | tail -1)" ]] && kill $sound_pid &>/dev/null
 
@@ -107,7 +105,7 @@ function tool_call {
 
     if [[ "$status_code" -eq 0 ]]; then
         local nextArgs=()
-        jq '.nextArgs[]' <<<"$output" | while read -r line; do
+        jq -c '.nextArgs[]' <<<"$output" | while read -r line; do
             nextArgs+=("$(jq -r '.' <<<"$line")")
         done
         result=$($funcname "${nextArgs[@]}" | tee -a $LOGS_FILE)
