@@ -180,11 +180,9 @@ function api_completion {
             parameters=$(jq -r ".function.arguments" <<<"$tool")
             resp=
             tool_call "$toolname" "$parameters" "resp"
-            status_code=$?
             rest=$(jq --rawfile resp <(cat <<<"$resp") \
                 '{tool_call_id: .id, name: .function.name, content: $resp}' <<<"$tool")
             __append_message "tool" "$rest"
-            [[ "$status_code" -ne 0 ]] && return # TODO: this breaks it when many tools, also should be able to keep earlier and former okay tool calls
         done
     done
 }

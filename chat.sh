@@ -98,29 +98,28 @@ function tool_call {
             echo "Tool allowed: " "$fmt" >>$LOGS_FILE
             ;;
         *)
-            prompt_user
-            result="<user_interrupted>$user_prompt</user_interrupted>"
             status_code=1
             ;;
         esac
     }
 
-    gum style "$fun $par" --foreground \
-        $([[ "$status_code" -eq 0 ]] && echo '#34d399' || echo '#e5c07b' --faint) >/dev/tty
-
     if [[ "$status_code" -eq 0 ]]; then
+        gum style "$fun $par" --foreground '#34d399' >/dev/tty
         local nextArgs=()
         jq -c '.nextArgs[]' <<<"$output" | while read -r line; do
             nextArgs+=("$(jq -r '.' <<<"$line")")
         done
         result=$($funcname "${nextArgs[@]}" | tee -a $LOGS_FILE)
         if [[ "${#result}" -gt $MAX_OUTPUT ]]; then
-            result=$(head -c $MAX_OUTPUT <<< "$result")"(truncated, $(( ${#result} - $MAX_OUTPUT )) remaining)"
+            result=$(head -c $MAX_OUTPUT <<<"$result")"(truncated, $((${#result} - $MAX_OUTPUT)) remaining)"
         fi
+    else
+        gum style "$fun $par" --foreground '#e5c07b' --faint >/dev/tty
+        prompt_user
+        result="<user_interrupted>$user_prompt</user_interrupted>"
     fi
 
     kill -$SIG_PLAY $mdcat_pid 2>/dev/null
-    return $status_code
 }
 
 function __consume_pipe {
