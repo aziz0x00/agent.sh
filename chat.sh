@@ -2,10 +2,12 @@
 
 _DIR=$(dirname "${BASH_SOURCE[0]}")
 
-[[ "$1" == "-raw" ]] && RAW_OUTPUT=true && shift
+[[ "$1" == "--raw" ]] && RAW_OUTPUT=true && shift
+[[ "$1" == "--free" ]] && BYPASS_PERMS=true && shift
 TMP_BASE=$(mktemp -u)
 STATE_FILE=$TMP_BASE.json
 LOGS_FILE=$TMP_BASE.log
+shopt -s lastpipe # because curl | while
 touch "$LOGS_FILE" &&
     [[ ! -z "$TMUX_PANE" ]] &&
     tmux splitw -dv -l 5 'echo -e "\e[38;5;244mLOGS('$LOGS_FILE')"; tail -f '$LOGS_FILE''
@@ -32,7 +34,7 @@ function prompt_user {
         local width=$(($(tput cols) - 2)) && ((width > 80)) && width=80
         user_prompt=""
         user_prompt=$(gum write --width $width --header="$model" --height=3 </dev/tty)
-        [ $? -ne 0 ] && exit # ^D
+        [ $? -eq 130 ] && exit # ^C
         [ -z "$user_prompt" ] && continue
         [[ $width -gt ${#user_prompt} ]] && width=0
         gum style --width $width --margin '0 0' --border=normal --padding="0 1" "$user_prompt"
@@ -66,7 +68,6 @@ function tool_call {
     output=$(Pre$funcname "$parameters")
     [[ $? -ne 0 ]] && result="$output" && return # immediately exit on error
 
-    jq .nextArgs <<<"$output" >>$LOGS_FILE
     printf "$funcname>\n%s\n\e[38;5;244m<$funcname\n" "$(jq -r .preview <<<"$output")" >>$LOGS_FILE
 
     fmt=$(jq -c -r .fmt <<<"$output")
@@ -75,7 +76,7 @@ function tool_call {
     par=$(gum style "$fmt" --foreground '#93a1a1')
 
     local status_code=0
-    [[ -z "${ALLOWED_TOOLS[$fmt]}""${SAFE_TOOLS[$funcname]}" ]] && {
+    [[ "$BYPASS_PERMS" != "true" ]] && [[ -z "${ALLOWED_TOOLS[$fmt]}""${SAFE_TOOLS[$funcname]}" ]] && {
         [[ -f "$NOTIFICATION_SOUND" ]] && { # delayed alert
             (
                 sleep 5
@@ -97,7 +98,8 @@ function tool_call {
             echo "Tool allowed: " "$fmt" >>$LOGS_FILE
             ;;
         *)
-            result="<user_interrupted>"
+            prompt_user
+            result="<user_interrupted>$user_prompt</user_interrupted>"
             status_code=1
             ;;
         esac
@@ -112,7 +114,9 @@ function tool_call {
             nextArgs+=("$(jq -r '.' <<<"$line")")
         done
         result=$($funcname "${nextArgs[@]}" | tee -a $LOGS_FILE)
-        result=$(echo "$result" | head -c $MAX_OUTPUT)
+        if [[ "${#result}" -gt $MAX_OUTPUT ]]; then
+            result=$(head -c $MAX_OUTPUT <<< "$result")"(truncated, $(( ${#result} - $MAX_OUTPUT )) remaining)"
+        fi
     fi
 
     kill -$SIG_PLAY $mdcat_pid 2>/dev/null
@@ -131,7 +135,8 @@ function __consume_pipe {
 }
 
 function clean_exit {
-    fuser --silent --kill "$LOGS_FILE"
+    echo CLEAN
+    fuser --kill "$LOGS_FILE"
     rm -f $TMP_BASE*
     kill -9 $mdcat_pid 2>/dev/null
     exit

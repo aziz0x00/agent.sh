@@ -25,10 +25,10 @@ function PreBash {
   local lang=bash
 
   case "$(jq -r '.command' <<<"$parameters" | head -1)" in
-  uv* | python*) lang=python ;;
+  *uv* | *python*) lang=python ;;
   esac
 
-  local preview=$(jq -r '.command' <<<"$parameters" | bat --language $lang --color always)
+  local preview=$(jq -r '.command' <<<"$parameters" | (bat --language $lang --color always || cat))
 
   jq --rawfile preview <(cat <<<"$preview") '{
     fmt: (.command|tojson),

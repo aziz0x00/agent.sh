@@ -1,4 +1,4 @@
-MODELS=(minimax-m2.5-free minimax-m2.1-free glm-4.7-free kimi-k2.5-free big-pickle grok-code kimi-k2 kimi-k2-thinking claude-opus-4-5 claude-sonnet-4-5)
+MODELS=(minimax-m2.5-free glm-5 kimi-k2.5 big-pickle grok-code claude-sonnet-4-5)
 
 SDK="" # ENUM: "openai_compat" | "anthropic"
 
@@ -109,13 +109,9 @@ function add_system_prompt {
 
 function set_attachments { echo "Binary attachments are not supported by the provider."; }
 
-shopt -s lastpipe # because curl | while
-
 function api_completion {
     local prompt=$1
-    case "$model" in
-    big-pickle) prompt+=" (think)" ;;
-    esac
+
     [[ ! -z "$prompt" ]] && # this can be empty during tool calls
         __append_message "user" "$(jq -n --arg c "$prompt" '{content: $c}')"
 
@@ -124,6 +120,8 @@ function api_completion {
         local tools=()
         __transform_state_$SDK
         local state=$TMP_BASE'.sdk.json'
+
+        local tool_name
 
             # -H 'x-opencode-session: :)' \
         curl -f -N -s "${ENDPOINT_URL[$SDK]}" \
@@ -145,10 +143,10 @@ function api_completion {
                 if [[ -z "${tools[idx]}" ]]; then
                     tools[idx]=$(jq -r "${PARAM_TOOL_CALL[$SDK]}" <<<"$chunk")
                     echo >>$LOGS_FILE
-                    jq -r '.function.name' <<<"${tools[$idx]}" >>$LOGS_FILE
+                    tool_name=$(jq -r -j '.function.name' <<<"${tools[$idx]}")
                 else
                     tools[idx]=$(jq -r --argjson chunk "$chunk" "${PARAM_ARG_APPEND[$SDK]}" <<<"${tools[idx]}")
-                    echo -ne "\x0d ∑ ${#tools[idx]}" >>$LOGS_FILE
+                    echo -ne '\x0d '"$tool_name ∑ ${#tools[idx]}" >>$LOGS_FILE
                 fi
             else
                 [[ "$(jq "${PARAM_REASONING[$SDK]}" <<<"$chunk")" != '""' ]] && {
@@ -164,7 +162,7 @@ function api_completion {
         [[ -z "$response" ]] && [[ "${#tools[@]}" -eq 0 ]] &&
             echo "[No response, retrying in 2s..]" >>$LOGS_FILE && sleep 2 && continue
 
-        [[ ! -z "$response" ]] &&
+        [[ -n "$response" ]] &&
             __append_message "assistant" "$(jq -n --arg c "$response" '{content: $c}')"
 
         [[ -z "${tools[@]}" ]] && return

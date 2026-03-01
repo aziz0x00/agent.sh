@@ -40,13 +40,13 @@ function PreRead {
   local preview=$(tail -n +"$((offset + 1))" "$path" | head -n "$limit" 2>&1)
 
   jq --rawfile preview <(cat <<<"$preview") '{
-    fmt: (.path|tojson),
-    preview: $preview,
+    fmt: .path,
+    preview: .,
     nextArgs: [$preview]
   }' <<<"$parameters"
 }
 
 function Read {
-  local preview=$1
-  cat <<<"$preview"
+  local output=$1
+  cat <<<"$output"
 }

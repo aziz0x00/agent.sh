@@ -35,10 +35,10 @@ function PreWrite {
     return 1
   }
 
-  local preview=$(diff "$path" --color=always <(echo "$content") 2>&1)
+  local preview=$(diff --color=always <(cat "$path" 2>/dev/null) <(echo "$content") 2>&1)
 
-  jq --rawfile preview <(cat <<<"$preview") '{
-    fmt: (.path|tojson),
+  jq --rawfile preview <(echo "$path"; cat <<<"$preview") '{
+    fmt: .path,
     preview: $preview,
     nextArgs: [.path, .content, .mode]
   }' <<<"$parameters"

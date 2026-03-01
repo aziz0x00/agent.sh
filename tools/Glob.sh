@@ -49,7 +49,7 @@ function PreGlob {
   local preview=$(printf '%s\n' "${matches[@]}")
 
   jq --rawfile preview <(cat <<<"$preview") '{
-    fmt: {pattern, root_dir},
+    fmt: .root_dir + "/" + .pattern,
     preview: $preview,
     nextArgs: [$preview]
   }' <<<"$parameters"

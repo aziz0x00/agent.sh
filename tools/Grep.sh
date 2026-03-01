@@ -28,8 +28,8 @@ function PreGrep {
   local parameters=$(jq '.path = (.path // ".") | .include = (.include // "")' <<<"$1")
 
   jq '{
-    fmt: "pattern=" + (.pattern|tojson) + ", path=" + (.path|tojson) + ", include=" + (.include|tojson),
-    preview: "",
+    fmt: (.pattern|tojson) + " @" + .path + " +" + (.include|tojson),
+    preview: .,
     nextArgs: [.pattern, .path, .include]
   }' <<<"$parameters"
 }
@@ -39,7 +39,7 @@ function Grep {
   local path=$2
   local include=$3
 
-  local args=("-nH" "--field-match-separator=|" "--regexp" "$pattern")
+  local args=("-nH" "--field-match-separator=|" "--multiline" "--regexp" "$pattern")
   if [[ -n "$include" ]]; then
     args+=("--glob" "$include")
   fi

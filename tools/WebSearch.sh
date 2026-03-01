@@ -19,7 +19,7 @@ function PreWebSearch {
 
   jq '{
     fmt: (.query|tojson),
-    preview: "",
+    preview: .query,
     nextArgs: [.query]
   }' <<<"$parameters"
 }
