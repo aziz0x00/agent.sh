@@ -49,6 +49,7 @@ PROVIDER=ollama j
 | **Write**     | Create or append files               |
 | **Bash**      | Run shell commands                   |
 | **WebSearch** | Search the web via Exa AI            |
+| **WebFetch** | Fetch urls with `curl` and `html2text`            |
 | **Skill**     | Use specialized skills               |
 | **Question**  | Ask user for input/choices           |
 
