@@ -2,9 +2,7 @@
 
 tiny terminal agent, written with simplicity and composability in mind.
 
-
 https://github.com/user-attachments/assets/f53c96da-043c-45af-9b12-0eb7211fef16
-
 
 ## Usage
 
@@ -13,24 +11,29 @@ cmd1 | chat what should i look for in this
 ```
 
 ```bash
-chat "what's an cyclic endomorphism"
+chat "what's a cyclic endomorphism"
 ```
 
 ```bash
 chat
 ```
 
+Flags:
+
+- `--raw` plain output (no markdown rendering), exits after one completion — good for piping: `cmd1 | chat --raw summarize > out.md`
+- `--free` skip tool permission prompts
+
 ## Install
 
-Make sure to have [uv](https://github.com/astral-sh/uv), [jq](https://github.com/jqlang/jq), [rg](https://github.com/BurntSushi/ripgrep) [bat](https://github.com/sharkdp/bat) and [gum](https://github.com/charmbracelet/gum) installed
+Make sure to have [uv](https://github.com/astral-sh/uv), [jq](https://github.com/jqlang/jq), [rg](https://github.com/BurntSushi/ripgrep), [bat](https://github.com/sharkdp/bat), [gum](https://github.com/charmbracelet/gum) and [html2text](https://github.com/grobian/html2text) installed
 
-Clone the repo, save it somewhere and alias `agent.sh` to a command name of your preference
+Clone the repo and alias `agent.sh` to a command name of your preference
 
 ```bash
 alias j='/path/to/agent.sh'
 ```
 
-Put your providers API keys (if any) in `.env`, see `.env.example`
+Put your provider API keys (if any) in `.env`, see `.env.example`
 
 Pick a provider from `providers/` with the `PROVIDER` env var (default: `opencode-go`)
 
@@ -38,22 +41,20 @@ Pick a provider from `providers/` with the `PROVIDER` env var (default: `opencod
 PROVIDER=ollama j
 ```
 
-## Current Capabilites
+## Current Capabilities
 
-| Tool          | Description                          |
-|---------------|--------------------------------------|
-| **Glob**      | Find files by pattern                |
-| **Grep**      | Search inside files                  |
-| **Read**      | Read file                            |
-| **Edit**      | Modify file                          |
-| **Write**     | Create or append files               |
-| **Bash**      | Run shell commands                   |
-| **WebSearch** | Search the web via Exa AI            |
-| **WebFetch** | Fetch urls with `curl` and `html2text`            |
-| **Skill**     | Use specialized skills               |
-| **Question**  | Ask user for input/choices           |
-
-
+| Tool          | Description                             |
+|---------------|-----------------------------------------|
+| **Glob**      | Find files by pattern                   |
+| **Grep**      | Search inside files                     |
+| **Read**      | Read file                               |
+| **Edit**      | Modify file                             |
+| **Write**     | Create or append files                  |
+| **Bash**      | Run shell commands                      |
+| **WebSearch** | Search the web via Exa AI               |
+| **WebFetch**  | Fetch URLs with `curl` and `html2text`  |
+| **Skill**     | Use specialized skills                  |
+| **Question**  | Ask user for input/choices              |
 
 ## Slash Commands
 
@@ -62,62 +63,20 @@ PROVIDER=ollama j
 - `/logs`, `/l`     displays logs, which are either outputs of executed tools or reasoning tokens
 - `/model`, `/m`    change used model
 
-
 ## Add Capabilities
 
 ### Skills
 
-All skills must be placed in `~/.agents/skills/` (customized by `SKILL_PATH` env var) in the standard `SKILL.md` format, see `./tools/Skill.sh`.
+All skills must be placed in `~/.agents/skills/` (customizable via the `SKILL_PATH` env var) in the standard `SKILL.md` format, see `./tools/Skill.sh`.
 
 ### Tools
 
-You can add tools to agent.sh with tool files in the `tools/` directory.
+Tools are as simple as Bash functions.  You can check `tools/` directory for
+reference, or just ask agent.sh to create it for you!
 
-A tool `Foo.sh` file should be in the following format:
+## Contributions
 
-```bash
-TOOL_DEF='{
-  "name": "Foo",
-  "description": "tool description",
-  "parameters": {
-    --- parameter spec ---
-  }
-}'
-
-## @output either:
-# - noerror+json: {fmt: string, preview: string, nextArgs: [string]}
-# - error+string: output will be immediately sent back to model (e.g. file doesn't exist)
-function PreFoo {
-  parameters=$(jq '
-  .param = (.param // "default_value")
-' <<<"$1") # set defaults
-
-  jq -n --arg preview "$preview" '{
-    fmt: "param=" + .param,
-    preview: $preview,
-    nextArgs: [.param]
-  }' <<<"$parameters"
-}
-
-## @params: nextArgs from PreFoo
-function Foo {
-  param=$1
-  # do stuff and write result to stdout
-}
-```
-
-Check available tools and `./tools/0-TEMPLATE.sh` for reference
-
-For now you can put your system prompt in `system_prompt.md` (the current one needs improvements)..
-> what I imagine a better improvement is to have agents, and each agents has it's own system prompt and additional settings
-
-
-## TODO
-
-- make it more useful (subagents, context compaction, ...)
-- shorter and smaller code base
-- improve code simplicity and readability
-- add other providers later if needed
+All contributions are welcome !
 
 ## Credits
 
