@@ -3,7 +3,7 @@
 tiny terminal agent, written with simplicity and composability in mind.
 
 
-https://github.com/user-attachments/assets/3e956d9b-4917-4306-86a9-c07da6642a30
+https://github.com/user-attachments/assets/f53c96da-043c-45af-9b12-0eb7211fef16
 
 
 ## Usage
