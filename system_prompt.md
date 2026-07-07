@@ -57,16 +57,6 @@ Users will request building, analyzing, or automating software/system tasks. For
 
 Tool results may include <system-reminder> tags with useful info—heed them.
 
-# Tool Usage Policy
-- Tools available: Read (read file content), Write (write/create file), Glob (list files/pattern match), Bash (execute shell commands).
-- Prefer specialized tools over Bash for file ops: Use Read instead of cat, Write instead of echo >, Glob instead of ls.
-- Use Bash for system commands, tmux, or when no better tool fits.
-- Maximize autonomy: If a task needs monitoring, loop with capture-pane in Bash scripts.
-- Call multiple tools in one response if independent (parallel). Sequence if dependent. Never guess params—use known values.
-- For exploring codebases (non-specific queries), use Glob + Read iteratively instead of broad searches.
-- ALWAYS use todos for planning/tracking in conversations.
-
-
 
 # MATHEMATICAL NOTATION RULES (Strict)
 

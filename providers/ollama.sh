@@ -41,8 +41,6 @@ function add_system_prompt {
 
 function set_attachments { echo "Binary attachments are not supported by the provider."; }
 
-shopt -s lastpipe
-
 function api_completion {
     local prompt=$1
     [[ ! -z "$prompt" ]] &&
@@ -52,7 +50,7 @@ function api_completion {
         local response=""
         local tools=()
         curl -f -N -s "$ENDPOINT_URL" \
-            --json @$STATE_FILE 2>>$LOGS_FILE | while IFS= read -r line; do
+            --json @$STATE_FILE 2>/dev/null | while IFS= read -r line; do
             [ -z "$line" ] && continue
 
             [[ "$line" == '[DONE]' ]] && break
@@ -84,7 +82,7 @@ function api_completion {
         [[ ! -z "$response" ]] &&
             __append_message "assistant" "$(jq -n --arg c "$response" '{content: $c}')"
 
-        [[ -z "${tools[@]}" ]] && return
+        [[ ${#tools[@]} -eq 0 ]] && return
 
         local rest='{"tool_calls": []}'
         for tool in "${tools[@]}"; do
@@ -99,11 +97,9 @@ function api_completion {
             parameters=$(jq -r ".function.arguments" <<<"$tool")
             resp=
             tool_call "$toolname" "$parameters" "resp"
-            status_code=$?
             rest=$(jq --rawfile resp <(cat <<<"$resp") \
                 '{tool_call_id: .id, name: .function.name, content: $resp}' <<<"$tool")
             __append_message "tool" "$rest"
-            [[ "$status_code" -ne 0 ]] && return
         done
     done
 }

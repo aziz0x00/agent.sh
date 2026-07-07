@@ -1,11 +1,11 @@
-MODELS=(minimax-m2.5-free glm-5 kimi-k2.5 big-pickle grok-code claude-sonnet-4-5)
+MODELS=(minimax-m2.7 minimax-m3 glm-5.2 kimi-k2.6)
 
 SDK="" # ENUM: "openai_compat" | "anthropic"
 
 declare -A \
     ENDPOINT_URL=(
-        [anthropic]='https://opencode.ai/zen/v1/messages'
-        [openai_compat]='https://opencode.ai/zen/v1/chat/completions') \
+        [anthropic]='https://opencode.ai/zen/go/v1/messages'
+        [openai_compat]='https://opencode.ai/zen/go/v1/chat/completions') \
     PARAM_TOTAL_TOKENS=(
         [anthropic]='.usage.input_tokens + .usage.output_tokens' [openai_compat]='.usage.total_tokens') \
     PARAM_TOOL_CHECK=(
@@ -82,8 +82,8 @@ function switch_model {
     jq_inplace '.model = "'"$model"'"'
 
     case "$model" in
-    minimax-m2.1* | claude-*) SDK="anthropic" ;;
-    glm-* | minimax-m2.5* | kimi-k2* | grok-code | big-pickle) SDK="openai_compat" ;;
+    minimax-m* | claude-*) SDK="anthropic" ;;
+    glm-* | minimax-m2.5* | kimi-k2* | grok-code | big-pickle | deepseek-*) SDK="openai_compat" ;;
     esac
 }
 
@@ -124,7 +124,7 @@ function api_completion {
         local tool_name
 
         curl -f -N -s "${ENDPOINT_URL[$SDK]}" \
-            $([[ -z "$OPENCODE_ZEN_API_KEY" ]] || echo -H "${KEY_HEADER[$SDK]} ${OPENCODE_ZEN_API_KEY}") \
+            -H "${KEY_HEADER[$SDK]} ${OPENCODE_GO_API_KEY}" \
             --json @$state 2>/dev/null | while IFS= read -r line; do
             [ -z "$line" ] && continue
 

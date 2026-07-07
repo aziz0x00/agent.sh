@@ -1,4 +1,4 @@
-# 🪄 chat.sh
+# 🪄 agent.sh
 
 tiny terminal agent, written with simplicity and composability in mind.
 
@@ -24,13 +24,19 @@ chat
 
 Make sure to have [uv](https://github.com/astral-sh/uv), [jq](https://github.com/jqlang/jq), [rg](https://github.com/BurntSushi/ripgrep) [bat](https://github.com/sharkdp/bat) and [gum](https://github.com/charmbracelet/gum) installed
 
-Clone the repo, save it somewhere and alias `chat.sh` to a command name of your preference
+Clone the repo, save it somewhere and alias `agent.sh` to a command name of your preference
 
 ```bash
-alias j='/path/to/chat.sh'
+alias j='/path/to/agent.sh'
 ```
 
 Put your providers API keys (if any) in `.env`, see `.env.example`
+
+Pick a provider from `providers/` with the `PROVIDER` env var (default: `opencode-go`)
+
+```bash
+PROVIDER=ollama j
+```
 
 ## Current Capabilites
 
@@ -64,7 +70,7 @@ All skills must be placed in `~/.agents/skills/` (customized by `SKILL_PATH` env
 
 ### Tools
 
-You can add tools to chat.sh with tool files in the `tools/` directory.
+You can add tools to agent.sh with tool files in the `tools/` directory.
 
 A tool `Foo.sh` file should be in the following format:
 

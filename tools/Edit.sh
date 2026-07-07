@@ -1,6 +1,6 @@
 TOOL_DEF='{
   "name": "Edit",
-  "description": "Edit an existing file by replacing content at a specific line range.",
+  "description": "Edit an existing file by replacing an exact string match with new content.",
   "parameters": {
     "type": "object",
     "properties": {
@@ -33,7 +33,7 @@ function PreEdit {
   local path=$(jq -r .path <<<"$parameters")
 
   [[ -w "$path" ]] || {
-    echo "Error: File '$path' does not exist or not readable."
+    echo "Error: File '$path' does not exist or is not writable."
     return 1
   }
 
@@ -73,6 +73,6 @@ function Edit {
   local tmp=$2
 
   cat "$tmp" >"$path"
-  [[ $? -eq 0 ]] && echo "Edit succeded." || echo "Unexpected error."
+  [[ $? -eq 0 ]] && echo "Edit succeeded." || echo "Unexpected error."
   rm "$tmp" &>/dev/null
 }

@@ -31,7 +31,7 @@ function PreWrite {
   local content=$(jq -r .content <<<"$parameters")
 
   [[ -w "$path" ]] || [[ -w "$(dirname "$path")" ]] || {
-    echo "Error: File '$path' does not writable"
+    echo "Error: File '$path' is not writable"
     return 1
   }
 
@@ -55,5 +55,5 @@ function Write {
     echo -n "$content" >"$path"
   fi
 
-  [[ $? -eq 0 ]] && echo "Write succeded." || echo "Unexpected error."
+  [[ $? -eq 0 ]] && echo "Write succeeded." || echo "Unexpected error."
 }

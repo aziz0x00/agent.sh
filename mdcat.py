@@ -15,27 +15,25 @@ from markdown_it.token import Token
 
 
 THEME = {
-    "markdown.h1": "#f7faf7 bold on #2aa198",
-    "markdown.h2": "bold #01aefd",
-    "markdown.h3": "bold #01aefd",
-    "markdown.h4": "bold #01aefd",
-    "markdown.h5": "bold #01aefd",
-    "markdown.h6": "bold #01aefd",
-    "markdown.text": "#d0d0d0",
-    "markdown.strong": "bold #d0d0d0",
-    "markdown.emphasis": "italic #d0d0d0",
-    "markdown.code": "#89b4fa on #313244",
-    "markdown.code_block": "on #313244",
-    "markdown.link": "#94e2d5 underline",
-    "markdown.block_quote": "#fab387",
-    "markdown.list": "#d0d0d0",
-    "markdown.item": "#d0d0d0",
-    "markdown.item.bullet": "#cfab5e",
-    "markdown.item.number": "#cfab5e",
-    # "markdown.item_bullet": "#cba6f7",  # mauve bullets
-    # "markdown.item_number": "#89b4fa",
-    "none": "#d0d0d0",
-    "markdown.hr": "#585b70",
+    "markdown.h1": "bold #2e3440 on #88c0d0",
+    "markdown.h2": "bold #81a1c1",
+    "markdown.h3": "bold #88c0d0",
+    "markdown.h4": "bold #8fbcbb",
+    "markdown.h5": "bold #a3be8c",
+    "markdown.h6": "bold #b48ead",
+    "markdown.text": "#d8dee9",
+    "markdown.strong": "bold #eceff4",
+    "markdown.emphasis": "italic #b48ead",
+    "markdown.code": "#88c0d0 on #3b4252",
+    "markdown.code_block": "on #2e3440",
+    "markdown.link": "#8fbcbb underline",
+    "markdown.block_quote": "italic #d08770",
+    "markdown.list": "#d8dee9",
+    "markdown.item": "#d8dee9",
+    "markdown.item.bullet": "#b48ead",
+    "markdown.item.number": "#ebcb8b",
+    "none": "#d8dee9",
+    "markdown.hr": "#4c566a",
 }
 
 
@@ -76,13 +74,13 @@ Markdown.elements["heading_open"] = Heading
 
 def main():
     console = Console(theme=Theme(THEME))
-    console.width = min(console.width, 100) # fit width
+    console.width = min(console.width, 100)  # fit width
 
     markdown_text = ""
     buffer_size = 4096
     timeout = 0.05  # Timeout for select in seconds
 
-    with Live(console=console, auto_refresh=True, refresh_per_second=4) as live:
+    with Live(console=console, auto_refresh=True, refresh_per_second=5) as live:
         while resume:
             # Wait for input
             rlist, _, _ = select.select([sys.stdin], [], [], timeout)
