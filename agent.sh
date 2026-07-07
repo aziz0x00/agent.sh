@@ -41,8 +41,8 @@ switch_model "${MODELS[0]}"
 add_system_prompt "$(cat "$_DIR"/system_prompt.md)"
 add_system_prompt "Current date: $(date "+%a %b %d %Y")"
 
-declare -A TOOLS ALLOWED_TOOLS SAFE_TOOLS=([Skill]=1 [WebSearch]=1 [Question]=1) # TODO: do better tool perms mgmt
-for tool in Question Read Glob Grep WebSearch Skill Edit Write Bash; do
+declare -A TOOLS ALLOWED_TOOLS SAFE_TOOLS=([Skill]=1 [WebSearch]=1 [WebFetch]=1 [Question]=1) # TODO: do better tool perms mgmt
+for tool in Question Read Glob Grep WebSearch WebFetch Skill Edit Write Bash; do
     source "$_DIR"/tools/$tool.sh
     TOOLS[$tool]=$TOOL_DEF
 done && activate_tools TOOLS
