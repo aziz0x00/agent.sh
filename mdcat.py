@@ -6,12 +6,11 @@
 
 import os, signal, select, sys
 from rich.live import Live
-from rich.markdown import Markdown, TextElement, MarkdownContext
+from rich.markdown import Markdown
 from rich.text import Text
 from rich.theme import Theme
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.padding import Padding
-from markdown_it.token import Token
 
 
 THEME = {
@@ -38,38 +37,22 @@ THEME = {
 
 
 # inspired from the cool https://github.com/charmbracelet/glow
-class Heading(TextElement):
-    """A heading."""
-
-    @classmethod
-    def create(cls, markdown: Markdown, token: Token):
-        return cls(token.tag)
-
-    def on_enter(self, context: MarkdownContext) -> None:
-        self.text = Text()
-        context.enter_style(self.style_name)
-
-    def __init__(self, tag: str) -> None:
-        self.tag = tag
-        self.style_name = f"markdown.{tag}"
-        super().__init__()
-
-    def __rich_console__(
-        self, console: Console, options: ConsoleOptions
-    ) -> RenderResult:
-        text = self.text
-        if self.tag == "h1":
-            text.style = ""
-            text.end = ""
-            yield Text(" ", style="markdown.h1", end="")
-            yield text
-            yield Text(" ", style="markdown.h1")
-        else:
-            yield Text("#" * (int(self.tag[1:])) + " ", end="", style=self.style_name)
-            yield text
+def custom_rich_console(
+    self, console: Console, options: ConsoleOptions
+) -> RenderResult:
+    text = self.text
+    if self.tag == "h1":
+        text.style = ""
+        text.end = ""
+        yield Text(" ", style="markdown.h1", end="")
+        yield text
+        yield Text(" ", style="markdown.h1")
+    else:
+        yield Text("#" * (int(self.tag[1:])) + " ", end="", style=self.style_name)
+        yield text
 
 
-Markdown.elements["heading_open"] = Heading
+Markdown.elements["heading_open"].__rich_console__ = custom_rich_console
 
 
 def main():
