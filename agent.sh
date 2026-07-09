@@ -15,8 +15,6 @@ TMP_BASE=$(mktemp -u)
 STATE_FILE=$TMP_BASE.json
 LOGS_FILE=$TMP_BASE.log
 
-SIG_STOP=SIGUSR1 # pause mdcat rendering (see mdcat.py)
-SIG_PLAY=SIGUSR2 # resume it
 MAX_OUTPUT=40000 # truncate tool output beyond this
 
 set -a
@@ -110,7 +108,7 @@ function tool_call {
     local funcname=$1 parameters=$2
     declare -n result=$3
 
-    mdcat_pause
+    mdcat_close
 
     [[ -z "${TOOLS[$funcname]}" ]] && result="Tool unavailable." && return
 
@@ -137,13 +135,22 @@ function tool_call {
         prompt_user
         result="<user_interrupted>$user_prompt</user_interrupted>"
     fi
-
-    mdcat_resume
 }
 
 # ---------- plumbing ----------
-function mdcat_pause { kill -$SIG_STOP $mdcat_pid 2>/dev/null && sleep .1; } # it can lag behind the stream
-function mdcat_resume { kill -$SIG_PLAY $mdcat_pid 2>/dev/null; }
+# a renderer lives for exactly one assistant text block; providers open it on the
+# first text chunk, and closing fd 4 hands the terminal back to gum
+function mdcat_open {
+    [[ -n "$RAW_OUTPUT$mdcat_pid" ]] && return # raw output, or already streaming
+    exec 4> >(uv run "$_DIR"/mdcat.py 2>>"$LOGS_FILE")
+    mdcat_pid=$!
+}
+function mdcat_close {
+    [[ -z "$mdcat_pid" ]] && return
+    exec 4>&- # EOF makes mdcat commit its render and exit
+    wait "$mdcat_pid" 2>/dev/null
+    mdcat_pid=
+}
 
 function __consume_pipe {
     local input=$(mktemp)
@@ -170,21 +177,15 @@ user_prompt=$*
 [[ $# -eq 0 ]] && prompt_user
 [[ -p /dev/stdin || -f /dev/stdin ]] && __consume_pipe # should be after prompt_user
 
-if [[ -z "$RAW_OUTPUT" ]]; then # mdcat pretty-prints the stream written to fd 4
-    exec 4> >(uv run "$_DIR"/mdcat.py "$LOGS_FILE" 2>>"$LOGS_FILE")
-    mdcat_pid=$!
-else
-    exec 4> >(cat -)
-fi
+[[ -n "$RAW_OUTPUT" ]] && exec 4>&1 # raw: fd 4 goes straight to stdout, unrendered
 
 while true; do
     SECONDS=0
     api_completion "$user_prompt"
 
     status=$SECONDS
-    mdcat_pause
+    mdcat_close
     [[ -n "$total_tokens" ]] && status="${status}s · ${total_tokens} tok"
     [[ -z "$RAW_OUTPUT" ]] && echo -e "$C_DIM$status$C_OFF"
     prompt_user
-    mdcat_resume
 done

@@ -4,7 +4,7 @@
 # dependencies = ["rich"]
 # ///
 
-import os, signal, select, sys
+import os, sys
 from rich.live import Live
 from rich.markdown import Markdown
 from rich.text import Text
@@ -60,44 +60,17 @@ def main():
     console.width = min(console.width, 100)  # fit width
 
     markdown_text = ""
-    buffer_size = 4096
-    timeout = 0.05  # Timeout for select in seconds
 
-    with Live(console=console, auto_refresh=True, refresh_per_second=5) as live:
-        while resume:
-            # Wait for input
-            rlist, _, _ = select.select([sys.stdin], [], [], timeout)
-            if sys.stdin in rlist:
-                chunk = os.read(sys.stdin.fileno(), buffer_size)
-                if not chunk:
-                    break  # EOF reached
-                markdown_text += chunk.decode("utf-8", errors="replace")
-                md = Markdown(markdown_text, code_theme="ansi_dark", hyperlinks=False)
-                # 1 line top/bottom, 2 spaces left/right
-                live.update(Padding(md, (1, 2)))
+    with Live(console=console, auto_refresh=True, refresh_per_second=1) as live:
+        while True:
+            chunk = os.read(sys.stdin.fileno(), 4096)
+            if not chunk:
+                break  # EOF: agent.sh closed fd 4, leaving Live commits the render
+            markdown_text += chunk.decode("utf-8", errors="replace")
+            md = Markdown(markdown_text, code_theme="ansi_dark", hyperlinks=False)
+            # 1 line top/bottom, 2 spaces left/right
+            live.update(Padding(md, (1, 2)))
 
-
-STOP_SIG = signal.SIGUSR1
-PLAY_SIG = signal.SIGUSR2
 
 if __name__ == "__main__":
-    resume = True
-    "--once" in sys.argv[1:] and exit(main())
-
-    logfile = None
-    if len(sys.argv) >= 2:
-        logfile = open(sys.argv[1], "a")
-
-    def _handle(signum, _):
-        global resume
-        resume = signum == PLAY_SIG
-
-    signal.signal(STOP_SIG, _handle)
-    signal.signal(PLAY_SIG, _handle)
-
-    while True:
-        logfile and logfile.write("\n[P]\n") and logfile.flush()
-        main()
-        logfile and logfile.write("\n[S]\n") and logfile.flush()
-        while not resume:
-            signal.pause()
+    main()

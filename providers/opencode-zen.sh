@@ -152,6 +152,7 @@ function api_completion {
                 }
 
                 [[ $(jq "${PARAM_TEXT[$SDK]}" <<<"$chunk") != '""' ]] && {
+                    mdcat_open
                     jq "${PARAM_TEXT[$SDK]}" -r -j <<<"$chunk" >&4
                     response="$response$(jq "${PARAM_TEXT[$SDK]}" -r -j <<<"$chunk")"
                 }
